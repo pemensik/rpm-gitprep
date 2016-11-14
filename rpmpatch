@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Script to replace "patch" in rpmbuild, so git can be used instead
+#    --no-backup-if-mismatch -p1 -b --suffix .dynamic --fuzz=0
+STRIP=
+declare -a FILES
+NEXT=
+SUFFIX=
+GIT=git
+
+for P in "$@"
+do
+  case "$P" in
+	--no-backup-if-mismatch)
+		  ;;
+	--suffix=*)
+		SUFFIX="${P#--suffix=}"
+		;;
+	--suffix)
+		NEXT=suffix
+		;;
+	--fuzz=*|-b)
+		  ;;
+	--git=*)
+		[ -n "${P#--git=}" ] && GIT="${P#--git=}"
+		;;
+	-p*)
+		STRIP="$P"
+		;;
+	*)
+		if [ "$NEXT" != "suffix" ]; then
+			FILES+="$P"
+		else
+			SUFFIX="$P"
+		fi
+		;;
+  esac
+done
+
+$GIT apply --index $STRIP $FILES
+$GIT commit -m "${SUFFIX:-unnamed-patch}"

@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Script to replace last part of %setup macro to initialize git repo
+
+declare -a FIXPERMS
+declare -a FILES
+STATE=perm_gather
+GIT=git
+
+for F in "$@"
+do
+	if [ "$STATE" = perm_gather ]; then
+		case "$F" in
+			--)
+				STATE=files
+				;;
+			--git=*)
+				[ "$STATE" = perm_gather ] && GIT="${F#--git=}"
+				;;
+			*)
+				FIXPERMS+="$F"
+				;;
+		esac
+	else
+		FILES+="$F"
+	fi
+done
+$FIXPERMS
+$GIT init
+$GIT add $FILES
+$GIT commit -m initial
