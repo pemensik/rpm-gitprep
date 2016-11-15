@@ -8,7 +8,7 @@ License:	GPLv3+
 URL:		none
 Source0:	rpmpatch.git
 Source1:	rpmfixperms.git
-Source2:	macros-rpm-gitprep
+Source2:	macros.rpm-gitprep
 
 BuildArch:	noarch
 BuildRequires:	rpm
@@ -32,13 +32,13 @@ mkdir -p %{buildroot}/%{execpath}
 %{__install} -p rpmpatch.git %{buildroot}/%{execpath}/
 %{__install} -p rpmfixperms.git %{buildroot}/%{execpath}/
 mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
-%{__install} -p macros-rpm-gitprep %{buildroot}/%{_rpmconfigdir}/macros.d/
+%{__install} -p macros.rpm-gitprep %{buildroot}/%{_rpmconfigdir}/macros.d/
 
 %files
 %doc README.txt
 %license COPYING
 %{_libexecdir}/%{name}
-%{_rpmconfigdir}/macros.d/macros-rpm-gitprep
+%{_rpmconfigdir}/macros.d/macros.rpm-gitprep
 
 %changelog
 * Mon Nov 14 2016 Petr Menšík <pemensik@redhat.com> - 0.1-2
