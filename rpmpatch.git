@@ -40,6 +40,12 @@ do
   esac
 done
 
+MESSAGE="${SUFFIX:-unnamed-patch}"
+if [ "$($GIT status --porcelain | wc -l)" != 0 ]
+then
+   $GIT add -A
+   $GIT commit -m "modified before $MESSAGE"
+fi
 $PATCH ${PATCH_OPTS[@]} ${FILES[@]}
 $GIT add -A
-$GIT commit -m "${SUFFIX:-unnamed-patch}"
+$GIT commit -m "$MESSAGE"
