@@ -1,11 +1,12 @@
 # gitprep specific
 # Here comes the hack
 %_gitprep_rpmpatch %{_libexecdir}/rpm-gitprep/rpmpatch.git
-%_gitprep_rpmfixperms %{_libexecdir}/rpm-gitprep/rpmfixperms.git
 # original_value from lib 
-# is there way to use old %_fixperms value without recursion?
+# is there way to use old %_fixperms value without creating recursion?
 %_gitprep_orig_fixperms %{__chmod} -Rf a+rX,u+w,g-w,o-w
-%_gitprep_fixperms %{_gitprep_rpmfixperms} %{_gitprep_orig_fixperms} --git=%{__git} --
+%_gitprep_fixperms \
+%{_gitprep_orig_fixperms} \
+%{__scm_setup_git}
 %_gitprep__patch %{_gitprep_rpmpatch} --git=%{__git}
 
 # Add to your ~/.rpmmacros:

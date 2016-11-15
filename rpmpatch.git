@@ -2,11 +2,14 @@
 #
 # Script to replace "patch" in rpmbuild, so git can be used instead
 #    --no-backup-if-mismatch -p1 -b --suffix .dynamic --fuzz=0
-STRIP=
 declare -a FILES
+declare -a PATCH_OPTS
 NEXT=
 SUFFIX=
 GIT=git
+PATCH=patch
+
+set -e
 
 for P in "$@"
 do
@@ -24,8 +27,8 @@ do
 	--git=*)
 		[ -n "${P#--git=}" ] && GIT="${P#--git=}"
 		;;
-	-p*)
-		STRIP="$P"
+	-p*|-R|-E)
+		PATCH_OPTS+="$P"
 		;;
 	*)
 		if [ "$NEXT" != "suffix" ]; then
@@ -37,5 +40,6 @@ do
   esac
 done
 
-$GIT apply --index $STRIP $FILES
+$PATCH ${PATCH_OPTS[@]} ${FILES[@]}
+$GIT add -A
 $GIT commit -m "${SUFFIX:-unnamed-patch}"

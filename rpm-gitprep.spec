@@ -1,14 +1,13 @@
 Name:		rpm-gitprep
 Version:	0.1
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Prepare your RPM sources into git repository
 
 #Group:		
 License:	GPLv3+
 URL:		none
 Source0:	rpmpatch.git
-Source1:	rpmfixperms.git
-Source2:	macros.rpm-gitprep
+Source1:	macros.rpm-gitprep
 
 BuildArch:	noarch
 BuildRequires:	rpm
@@ -30,7 +29,6 @@ modified by what patches.
 %define execpath %{_libexecdir}/%{name}
 mkdir -p %{buildroot}/%{execpath}
 %{__install} -p rpmpatch.git %{buildroot}/%{execpath}/
-%{__install} -p rpmfixperms.git %{buildroot}/%{execpath}/
 mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
 %{__install} -p macros.rpm-gitprep %{buildroot}/%{_rpmconfigdir}/macros.d/
 
@@ -41,6 +39,10 @@ mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
 %{_rpmconfigdir}/macros.d/macros.rpm-gitprep
 
 %changelog
+* Tue Nov 15 2016 Petr Menšík <pemensik@redhat.com> - 0.1-3
+- Use patch directly, git apply is not powerful enough
+- Replace rpmfixperms with RPM macro
+
 * Mon Nov 14 2016 Petr Menšík <pemensik@redhat.com> - 0.1-2
 - Initial package
 
