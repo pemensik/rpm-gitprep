@@ -27,6 +27,9 @@ do
 	--git=*)
 		[ -n "${P#--git=}" ] && GIT="${P#--git=}"
 		;;
+	--patch=*)
+		[ -n "${P#--patch=}" ] && PATCH="${P#--patch=}"
+		;;
 	-p*|-R|-E)
 		PATCH_OPTS+="$P"
 		;;
