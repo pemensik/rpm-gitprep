@@ -17,7 +17,7 @@ do
 	--no-backup-if-mismatch)
 		# Do not produce .orig backups with classic patch
 		# Drop this option for git
-		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+="$P"
+		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+=("$P")
 		  ;;
 	--suffix=*)
 		SUFFIX="${P#--suffix=}"
@@ -34,11 +34,11 @@ do
 		[ -n "${P#--patch=}" ] && PATCH="${P#--patch=}"
 		;;
 	-p*|-R|-E)
-		PATCH_OPTS+="$P"
+		PATCH_OPTS+=("$P")
 		;;
 	*)
 		if [ "$NEXT" != "suffix" ]; then
-			FILES+="$P"
+			FILES+=("$P")
 		else
 			SUFFIX="$P"
 		fi
@@ -52,6 +52,6 @@ then
    $GIT add -A
    $GIT commit -m "modified before $MESSAGE"
 fi
-$PATCH ${PATCH_OPTS[@]} ${FILES[@]}
+$PATCH "${PATCH_OPTS[@]}" "${FILES[@]}"
 $GIT add -A
 $GIT commit -m "$MESSAGE"
