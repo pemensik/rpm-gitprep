@@ -15,6 +15,9 @@ for P in "$@"
 do
   case "$P" in
 	--no-backup-if-mismatch)
+		# Do not produce .orig backups with classic patch
+		# Drop this option for git
+		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+="$P"
 		  ;;
 	--suffix=*)
 		SUFFIX="${P#--suffix=}"
