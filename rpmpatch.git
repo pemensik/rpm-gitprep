@@ -25,8 +25,11 @@ do
 	--suffix)
 		NEXT=suffix
 		;;
-	--fuzz=*|-b)
-		  ;;
+	--fuzz=*)
+		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+=("$P")
+		;;
+	-b)
+		;;
 	--git=*)
 		[ -n "${P#--git=}" ] && GIT="${P#--git=}"
 		;;
@@ -41,6 +44,7 @@ do
 			FILES+=("$P")
 		else
 			SUFFIX="$P"
+			NEXT=
 		fi
 		;;
   esac
