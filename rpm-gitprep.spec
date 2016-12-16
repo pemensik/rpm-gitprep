@@ -8,6 +8,8 @@ License:	GPLv3+
 URL:		none
 Source0:	rpmpatch.git
 Source1:	macros.rpm-gitprep
+Source2:	README.txt
+Source3:	COPYING
 
 BuildArch:	noarch
 BuildRequires:	rpm
@@ -28,9 +30,9 @@ modified by what patches.
 %install
 %define execpath %{_libexecdir}/%{name}
 mkdir -p %{buildroot}/%{execpath}
-%{__install} -p rpmpatch.git %{buildroot}/%{execpath}/
+%{__install} -p %{SOURCE0} %{buildroot}/%{execpath}/
 mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
-%{__install} -p macros.rpm-gitprep %{buildroot}/%{_rpmconfigdir}/macros.d/
+%{__install} -p %{SOURCE1} %{buildroot}/%{_rpmconfigdir}/macros.d/
 
 %files
 %doc README.txt
