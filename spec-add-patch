@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# Script to simplify adding new patch file.
+
+PATCHNAME=
+SPECFILE="$(basename -- "$(pwd)".spec)"
+CHANGELOG_COMMENT=
+BACKUP=
+PKGTOOL=
+BUMPPARAMS=
+PATCHLEVEL=1
+GITADD=0
+
+usage()
+{
+	cat << HELP
+${0}: [-p strip] [-c comment] [-b suffix] [-s specfile] [-g] <patch...>
+	-p strip     Use patch strip number for given patch file(s)
+	-c comment   Use comment in changelog
+	-b suffix    Use provided suffix as backup of patch
+	-g           Add modified files to git index
+	-P pkgtool   Try prep with given tool
+HELP
+}
+
+while getopts -- "c:p:b:grP:h" PARAM "$@"
+do
+	case "${PARAM}" in
+		p) PATCHLEVEL="$OPTARG" ;;
+		c) CHANGELOG_COMMENT="$OPTARG" ;;
+		b) BACKUP=" -b $OPTARG" ;;
+		s) SPECFILE="$OPTARG" ;;
+		g) GITADD=1 ;;
+		P) PKGTOOL="$OPTARG" ;; 
+		r) BUMPPARAMS+="-$PARAM " ;;
+		h) usage; exit 0;;
+		\?) echo "Invalid option -$OPTARG" >&2 ;;
+	esac
+#	echo "-$PARAM-"
+done
+
+if ! [ -f "$SPECFILE" ]
+then
+	echo "Specfile $SPECFILE not found" >&2
+	exit 1
+fi
+
+MAXPATCH=$(spectool -l -P "$SPECFILE" | cut -d: -f1 | cut -c6- | sort -n | tail -1)
+
+set -e
+
+shift $(( OPTIND-1 ))
+for PATCHNAME in "$@"
+do
+	PATCHNAME="$1"
+	shift
+
+	if [ ! -f "$PATCHNAME" ]
+	then
+		echo "Patch file $PATCHNAME not found!" >&2
+		exit 1
+	fi
+
+	NEWPATCH_NUMBER=$((MAXPATCH+1))
+
+	if spectool -l -P "$SPECFILE" | cut -d: -f2- | grep '^\s*'"$PATCHNAME"'\s*$' > /dev/null
+	then
+		echo "Patch file $PATCHNAME is already present." >&2
+		exit 1
+	fi
+
+	sed -i -f - "$SPECFILE" <<SED
+/^[Pp]atch${MAXPATCH}:/ a \
+Patch${NEWPATCH_NUMBER}: ${PATCHNAME}
+/^%[Pp]atch${MAXPATCH}\s/ a \
+%patch${NEWPATCH_NUMBER} -p${PATCHLEVEL}${BACKUP}
+/^%[Pp]atch${MAXPATCH}$/ a \
+%patch${NEWPATCH_NUMBER} -p${PATCHLEVEL}${BACKUP}
+SED
+
+	[ "$GITADD" = '1' ] && git add "$PATCHNAME"
+
+	MAXPATCH=$NEWPATCH_NUMBER
+done
+
+if [ -z "$PATCHNAME" ]
+then
+	echo "No patch argument given." >&2
+	exit 1
+fi
+
+rpmdev-bumpspec $BUMPPARAMS ${CHANGELOG_COMMENT:+-c "$CHANGELOG_COMMENT"} -- "$SPECFILE"
+
+[ "$GITADD" = '1' ] && git add "$SPECFILE"
+
+[ -n "$PKGTOOL" ] && "$PKGTOOL" prep
