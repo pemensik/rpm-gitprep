@@ -10,6 +10,7 @@ PKGTOOL=
 BUMPPARAMS=
 PATCHLEVEL=1
 GITADD=0
+PATCHPAD=" "
 
 usage()
 {
@@ -19,11 +20,13 @@ ${0}: [-p strip] [-c comment] [-b suffix] [-s specfile] [-g] <patch...>
 	-c comment   Use comment in changelog
 	-b suffix    Use provided suffix as backup of patch
 	-g           Add modified files to git index
+	-r           Add -r parameter to rpmdev-bumpspec
 	-P pkgtool   Try prep with given tool
+	-S padding   Use padding before patch
 HELP
 }
 
-while getopts -- "c:p:b:grP:h" PARAM "$@"
+while getopts -- "c:p:b:grP:S:h" PARAM "$@"
 do
 	case "${PARAM}" in
 		p) PATCHLEVEL="$OPTARG" ;;
@@ -32,6 +35,7 @@ do
 		s) SPECFILE="$OPTARG" ;;
 		g) GITADD=1 ;;
 		P) PKGTOOL="$OPTARG" ;; 
+		S) PATCHPAD="$OPTARG" ;;
 		r) BUMPPARAMS+="-$PARAM " ;;
 		h) usage; exit 0;;
 		\?) echo "Invalid option -$OPTARG" >&2 ;;
@@ -71,7 +75,7 @@ do
 
 	sed -i -f - "$SPECFILE" <<SED
 /^[Pp]atch${MAXPATCH}:/ a \
-Patch${NEWPATCH_NUMBER}: ${PATCHNAME}
+Patch${NEWPATCH_NUMBER}:${PATCHPAD}${PATCHNAME}
 /^%[Pp]atch${MAXPATCH}\s/ a \
 %patch${NEWPATCH_NUMBER} -p${PATCHLEVEL}${BACKUP}
 /^%[Pp]atch${MAXPATCH}$/ a \
