@@ -1,0 +1,103 @@
+#!/usr/bin/python
+#
+# Script to help analyze spec file and extract parts of changelog
+# Main objective is to extract last changelog entry from git commit,
+# to be able to make bumpspec from commit.
+#
+# Usage: git show master -- '*.spec' | python ./spec-changelog
+
+import re
+import sys
+import datetime
+import subprocess
+
+class LogEntry:
+    dateformat="%a %b %d %Y"
+    def __init__(self, date, email, evr, lines=None):
+        self.date = self.parseDate(date)
+        self.email = email
+        self.evr = evr
+        if lines != None:
+            self.lines = lines
+        else:
+            self.lines = []
+
+    def parseDate(self, date):
+        return datetime.datetime.strptime(date, self.dateformat).date()
+
+    def formatDate(self, date):
+        return self.date.strftime(self.dateformat)
+
+    def addLines(self, lines):
+        self.lines += lines
+
+    def allLines(self):
+        return ''.join(self.lines).strip()
+
+    def printEntry(self):
+        if self.evr != None:
+            print("* {date} {email} - {evr}".format(date=self.formatDate(self.date), email=self.email, evr=self.evr))
+        else:
+            print("* {date} {email}".format(date=self.formatDate(self.date), email=self.email))
+        print(self.allLines())
+
+def match2entry(head):
+        evr = None
+        date = head.group(1)
+        email = head.group(2).strip()
+        if head.group(4) != None:
+            evr = head.group(4).rstrip()
+        return LogEntry(date, email, evr)
+    
+
+def parse(specfile):
+    re_changelog = re.compile('^%changelog(\s|$)')
+    re_changehead = re.compile('^\* (\w+ \w+ \w+ \w+) (.*>)( - (\d+.*))?')
+    timeformat="%a %b %d %Y"
+
+    in_changelog = False
+    in_entry = False
+    logLines = []
+    entries = []
+    stripchars = 0
+
+    for line in specfile.readlines():
+        if re_changelog.match(line) != None:
+            in_changelog = True
+        elif len(line)>0 and line[0] == ' ' and re_changelog.match(line[1:]) != None:
+            in_changelog = True
+
+        if in_entry:
+            line = line[stripchars:]
+            if line.rstrip() == "":
+                in_entry = False
+                entry.addLines(logLines)
+                entries.append(entry)
+                logLines = []
+            else:
+                logLines.append(line)
+        elif in_changelog:
+            head = re_changehead.match(line)
+            if head != None:
+                entry = match2entry(head)
+                stripchars = 0
+                in_entry = True
+            elif len(line)>0 and line[0] == '+':
+                head = re_changehead.match(line[1:])
+                if head != None:
+                    entry = match2entry(head)
+                    stripchars = 1
+                    in_entry = True
+    return entries
+
+entries = None
+if len(sys.argv)>1:
+    with open(sys.argv[1]) as f:
+        entries = parse(f)
+else:
+    entries = parse(sys.stdin)
+
+if len(entries)>0:
+    entry = entries[0]
+    print('"{0}"'.format(entry.allLines()))
+
