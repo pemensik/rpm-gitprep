@@ -109,16 +109,20 @@ def git_commit_show(commit):
     lines = StringIO.StringIO(out[0])
     return parse(lines)
 
-def bump(text, rightmost=False):
-    bumpcmd = ["rpmdev-bumpspec", "-c", text]
+def bump(spec, text, rightmost=False):
+    bumpcmd = ["rpmdev-bumpspec"]
+    if text:
+        bumpcmd.append('-c')
+        bumpcmd.append(text)
     if rightmost:
         bumpcmd.append('--rightmost')
+    bumpcmd.append(spec)
     return subprocess.call(bumpcmd)
 
 parser = argparse.ArgumentParser(description='Bump spec version from git change')
 parser.add_argument('--spec', help='Spec file that should be updated')
 parser.add_argument('--commit', help='Commit from which to extract last changelog')
-parser.add_argument('--bump', help='Bump the spec file')
+parser.add_argument('--bump', help='Bump the spec file', action='store_true')
 parser.add_argument('--rightmost', help='Modify only rightmost number of version. Passed to rpmdev-bumpspec', action='store_true')
 args = parser.parse_args()
 entries = None
@@ -133,7 +137,10 @@ else:
         entries = parse(sys.stdin)
 
 if args.bump:
-    bump(entries[0].allLines(), args.rightmost)
+    if not args.spec:
+        print("Bump requires --spec path")
+    else:
+        bump(args.spec, entries[0].allLines(), args.rightmost)
 else:
     print_last_text(entries)
 
