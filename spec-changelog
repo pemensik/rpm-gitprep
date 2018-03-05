@@ -4,14 +4,16 @@
 # Main objective is to extract last changelog entry from git commit,
 # to be able to make bumpspec from commit.
 #
-# Usage: git show master -- '*.spec' | python ./spec-changelog
 
 import re
 import sys
 import datetime
 import subprocess
+import argparse
+import StringIO
 
 class LogEntry:
+    """One entry parsed from spec %%changelog section"""
     dateformat="%a %b %d %Y"
     def __init__(self, date, email, evr, lines=None):
         self.date = self.parseDate(date)
@@ -51,6 +53,7 @@ def match2entry(head):
     
 
 def parse(specfile):
+    """Parse log entries from spec file"""
     re_changelog = re.compile('^%changelog(\s|$)')
     re_changehead = re.compile('^\* (\w+ \w+ \w+ \w+) (.*>)( - (\d+.*))?')
     timeformat="%a %b %d %Y"
@@ -90,14 +93,47 @@ def parse(specfile):
                     in_entry = True
     return entries
 
-entries = None
-if len(sys.argv)>1:
-    with open(sys.argv[1]) as f:
-        entries = parse(f)
-else:
-    entries = parse(sys.stdin)
+def print_last_text(entries):
+    """ Prints only last changelog text"""
+    if len(entries)>0:
+        entry = entries[0]
+        print('"{0}"'.format(entry.allLines()))
 
-if len(entries)>0:
-    entry = entries[0]
-    print('"{0}"'.format(entry.allLines()))
+
+def git_commit_show(commit):
+    """Read git commit change from spec file(s) in given branch"""
+    cmd = ['git', 'log', '-1', '-p', commit, '--']
+    cmd.append('*.spec')
+    git = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    out = git.communicate()
+    lines = StringIO.StringIO(out[0])
+    return parse(lines)
+
+def bump(text, rightmost=False):
+    bumpcmd = ["rpmdev-bumpspec", "-c", text]
+    if rightmost:
+        bumpcmd.append('--rightmost')
+    return subprocess.call(bumpcmd)
+
+parser = argparse.ArgumentParser(description='Bump spec version from git change')
+parser.add_argument('--spec', help='Spec file that should be updated')
+parser.add_argument('--commit', help='Commit from which to extract last changelog')
+parser.add_argument('--bump', help='Bump the spec file')
+parser.add_argument('--rightmost', help='Modify only rightmost number of version. Passed to rpmdev-bumpspec', action='store_true')
+args = parser.parse_args()
+entries = None
+
+if args.commit:
+    entries = git_commit_show(args.commit)
+else:
+    if args.spec:
+        with open(args.spec) as f:
+            entries = parse(f)
+    else:
+        entries = parse(sys.stdin)
+
+if args.bump:
+    bump(entries[0].allLines(), args.rightmost)
+else:
+    print_last_text(entries)
 
