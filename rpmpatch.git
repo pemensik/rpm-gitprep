@@ -4,12 +4,57 @@
 #    --no-backup-if-mismatch -p1 -b --suffix .dynamic --fuzz=0
 declare -a FILES
 declare -a PATCH_OPTS
+declare -a AM_OPTS
 NEXT=
 SUFFIX=
 GIT=git
 PATCH=patch
 
 set -e
+
+is_git_formatted()
+{
+	echo "$@" | grep -E '^From [a-f0-9]{40}' >/dev/null 2>&1
+}
+
+is_git_diff()
+{
+	echo "$@" | grep '^diff --git a/' >/dev/null 2>&1
+}
+
+apply()
+{
+	local FIRSTLINE="$1"
+	shift
+	if is_git_formatted "$FIRSTLINE"; then
+		if ! $GIT am "${AM_OPTS[@]}" $@; then
+			# If patching from different subdirectory, git am will fail
+			# apply patch and finish
+			$PATCH "${PATCH_OPTS[@]}" -i $@
+			$GIT add -A
+			$GIT am --continue
+		fi
+# It cannot handle missing files.
+#	elif is_git_diff "$FIRSTLINE"; then
+#		$GIT apply --index "${AM_OPTS[@]}" $@
+	else
+		$PATCH "${PATCH_OPTS[@]}" -i $@
+		$GIT add -A
+		$GIT commit -m "$MESSAGE"
+	fi
+	[ -n "$NOTES" ] && $GIT notes add -m "$NOTES"
+}
+
+patchname()
+{
+	local FNAME=
+	if [ -f "$1" ]; then
+		FNAME="$(basename -- "$1")"
+	elif [ "$1" = "-" -a -f "/proc/$$/fd/0" ]; then
+		FNAME=$(basename -- $(realpath "/proc/$$/fd/0"))
+	fi
+	[ -n "$FNAME" ] && echo "Patch: ${FNAME}"
+}
 
 for P in "$@"
 do
@@ -36,7 +81,11 @@ do
 	--patch=*)
 		[ -n "${P#--patch=}" ] && PATCH="${P#--patch=}"
 		;;
-	-p*|-R|-E)
+	-p*)
+		PATCH_OPTS+=("$P")
+		AM_OPTS+=("$P")
+		;;
+	-R|-E)
 		PATCH_OPTS+=("$P")
 		;;
 	*)
@@ -51,11 +100,22 @@ do
 done
 
 MESSAGE="${SUFFIX:-unnamed-patch}"
+
 if [ "$($GIT status --porcelain | wc -l)" != 0 ]
 then
    $GIT add -A
    $GIT commit -m "modified before $MESSAGE"
 fi
-$PATCH "${PATCH_OPTS[@]}" "${FILES[@]}"
-$GIT add -A
-$GIT commit -m "$MESSAGE"
+
+if [ "${#FILES[@]}" -eq 0 ]; then
+	NOTES="$(patchname -)"
+	TMPFILE=$(mktemp --tmpdir gitprep-lineXXXXX)
+	cat > "$TMPFILE"
+	apply "$(head -1 "$TMPFILE")" "$TMPFILE"
+	rm -f "$TMPFILE"
+else
+	for F in "${FILES[@]}"; do
+		NOTES="$(patchname "$F")"
+		apply "$(head -1 "$F")" "$F"
+	done
+fi
