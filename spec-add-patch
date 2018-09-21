@@ -93,7 +93,9 @@ then
 	exit 1
 fi
 
-rpmdev-bumpspec $BUMPPARAMS ${CHANGELOG_COMMENT:+-c "$CHANGELOG_COMMENT"} -- "$SPECFILE"
+if [ -n " $CHANGELOG_COMMENT" ]; then
+  rpmdev-bumpspec $BUMPPARAMS -c "$CHANGELOG_COMMENT" -- "$SPECFILE"
+fi
 
 [ "$GITADD" = '1' ] && git add "$SPECFILE"
 
