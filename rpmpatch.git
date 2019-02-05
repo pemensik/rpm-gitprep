@@ -9,6 +9,7 @@ NEXT=
 SUFFIX=
 GIT=git
 PATCH=patch
+MESSAGE=
 
 set -e
 
@@ -73,7 +74,13 @@ do
 	--fuzz=*)
 		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+=("$P")
 		;;
-	-b)
+	-m)
+		NEXT=message
+		;;
+	--message=*)
+		MESSAGE="${P#--message=}"
+		;;
+	-b|-s)
 		;;
 	--git=*)
 		[ -n "${P#--git=}" ] && GIT="${P#--git=}"
@@ -88,18 +95,24 @@ do
 	-R|-E)
 		PATCH_OPTS+=("$P")
 		;;
+	-*)
+		echo "Warning: unsupported option $P" >&2
+		;;
 	*)
-		if [ "$NEXT" != "suffix" ]; then
-			FILES+=("$P")
-		else
+		if [ "$NEXT" = "suffix" ]; then
 			SUFFIX="$P"
 			NEXT=
+		elif [ "$NEXT" = "message" ]; then
+			MESSAGE="$P"
+			NEXT=
+		else
+			FILES+=("$P")
 		fi
 		;;
   esac
 done
 
-MESSAGE="${SUFFIX:-unnamed-patch}"
+[ -z "$MESSAGE" ] && MESSAGE="${SUFFIX:-unnamed-patch}"
 
 if [ "$($GIT status --porcelain | wc -l)" != 0 ]
 then
