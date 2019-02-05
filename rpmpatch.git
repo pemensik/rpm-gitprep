@@ -3,6 +3,7 @@
 # Script to replace "patch" in rpmbuild, so git can be used instead
 #    --no-backup-if-mismatch -p1 -b --suffix .dynamic --fuzz=0
 declare -a FILES
+declare -a NUMBERS
 declare -a PATCH_OPTS
 declare -a AM_OPTS
 NEXT=
@@ -43,7 +44,7 @@ apply()
 		$GIT add -A
 		$GIT commit -m "$MESSAGE"
 	fi
-	[ -n "$NOTES" ] && $GIT notes add -m "$NOTES"
+	[ -n "$NOTES" ] && $GIT notes add -m "$NOTES" || :
 }
 
 patchname()
@@ -54,9 +55,10 @@ patchname()
 	elif [ "$1" = "-" -a -f "/proc/$$/fd/0" ]; then
 		FNAME=$(basename -- $(realpath "/proc/$$/fd/0"))
 	fi
-	[ -n "$FNAME" ] && echo "Patch: ${FNAME}"
+	[ -n "$FNAME" ] && echo "Patch: ${FNAME}" || :
 }
 
+echo "$@"
 for P in "$@"
 do
   case "$P" in
@@ -105,6 +107,8 @@ do
 		elif [ "$NEXT" = "message" ]; then
 			MESSAGE="$P"
 			NEXT=
+		elif echo "$P" | grep -q '^[0-9]\+$'; then
+			NUMBERS+=($P)
 		else
 			FILES+=("$P")
 		fi
@@ -127,8 +131,14 @@ if [ "${#FILES[@]}" -eq 0 ]; then
 	apply "$(head -1 "$TMPFILE")" "$TMPFILE"
 	rm -f "$TMPFILE"
 else
-	for F in "${FILES[@]}"; do
+	for ((I=0; I<${#FILES[@]}; I++)); do
+		echo "$I/${#FILES[@]} ${FILES[0]}"
+		F="${FILES[$I]}"
 		NOTES="$(patchname "$F")"
+		if [ -n "${NUMBERS[$I]}" ]; then
+			NOTES+=$'\n'
+			NOTES+="PatchNumber: ${NUMBERS[$I]}"
+		fi
 		apply "$(head -1 "$F")" "$F"
 	done
 fi
