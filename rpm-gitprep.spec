@@ -41,7 +41,7 @@ mkdir -p %{buildroot}%{_bindir}
 %{__install} -m 755 %{SOURCE5} %{buildroot}%{_bindir}/spec-changelog
 
 %files
-%doc README.txt
+%doc README.md
 %license COPYING
 %{_libexecdir}/%{name}
 %{_rpmconfigdir}/macros.d/macros.rpm-gitprep
