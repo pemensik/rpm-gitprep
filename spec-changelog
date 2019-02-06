@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Script to help analyze spec file and extract parts of changelog
 # Main objective is to extract last changelog entry from git commit,
@@ -10,7 +10,10 @@ import sys
 import datetime
 import subprocess
 import argparse
-import StringIO
+if sys.version_info.major < 3:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 class LogEntry:
     """One entry parsed from spec %%changelog section"""
@@ -104,9 +107,12 @@ def git_commit_show(commit):
     """Read git commit change from spec file(s) in given branch"""
     cmd = ['git', 'log', '-1', '-p', commit, '--']
     cmd.append('*.spec')
-    git = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    out = git.communicate()
-    lines = StringIO.StringIO(out[0])
+    if sys.version_info.major >= 3:
+        git = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    else:
+        git = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    out, err = git.communicate()
+    lines = StringIO(out)
     return parse(lines)
 
 def bump(spec, text, rightmost=False):
