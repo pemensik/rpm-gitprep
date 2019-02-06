@@ -1,6 +1,6 @@
 Name:		rpm-gitprep
 Version:	0.1
-Release:	5%{?dist}
+Release:	6%{?dist}
 Summary:	Prepare your RPM sources into git repository
 
 #Group:		
@@ -8,7 +8,7 @@ License:	GPLv3+
 URL:		none
 Source0:	rpmpatch.git
 Source1:	macros.rpm-gitprep
-Source2:	README.txt
+Source2:	README.md
 Source3:	COPYING
 Source4:	spec-add-patch
 Source5:	spec-changelog
@@ -49,6 +49,9 @@ mkdir -p %{buildroot}%{_bindir}
 %{_bindir}/spec-changelog
 
 %changelog
+* Wed Feb 06 2019 Petr Menšík <pemensik@redhat.com> - 0.1-6
+- Add support for autosetup scm
+
 * Mon Mar 05 2018 Petr Menšík <pemensik@redhat.com> - 0.1-5
 - Add spec-changelog tool for dist-git bumping
 
