@@ -25,7 +25,8 @@ analyze what patches of package changed. Or what files were
 modified by what patches.
 
 %prep
-
+[ -f "README.md" ] || install %{SOURCE2} README.md
+[ -f "COPYING" ]   || install %{SOURCE3} COPYING
 
 %build
 
