@@ -17,6 +17,7 @@ BuildArch:	noarch
 BuildRequires:	rpm
 Requires:	rpm
 Requires:	rpmdevtools
+Requires:	git-core
 
 %description
 This tool helps you to prepare your sources using rpmbuild -bp or 
