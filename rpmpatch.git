@@ -11,6 +11,7 @@ SUFFIX=
 GIT=git
 PATCH=patch
 MESSAGE=
+AMEND_NOTES=y
 
 set -e
 
@@ -44,7 +45,13 @@ apply()
 		$GIT add -A
 		$GIT commit -m "$MESSAGE"
 	fi
-	[ -n "$NOTES" ] && $GIT notes add -m "$NOTES" || :
+	if [ -n "$NOTES" ]; then
+		if [ "$AMEND_NOTES" = y ]; then
+			GIT_EDITOR="echo \"$NOTES\" | tee -a" $GIT commit --amend
+		else
+			$GIT notes add -m "$NOTES" || :
+		fi
+	fi
 }
 
 patchname()
@@ -96,6 +103,10 @@ do
 		;;
 	-R|-E)
 		PATCH_OPTS+=("$P")
+		;;
+	--notes)
+		# Use git notes only
+		AMEND_NOTES=
 		;;
 	-*)
 		echo "Warning: unsupported option $P" >&2
