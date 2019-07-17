@@ -26,10 +26,51 @@ HOSTPATH=$(echo "$HOST_PACKAGE" | cut -d' ' -f2)
 URL_PREFIX=
 URL_SUFFIX=
 
+# pass hostname and receive template for URLs
+# configuration is quite primitive. Just two columns,
+# first is hostname, second is URL template
+# Takes file argument and hostname
+read_config()
+{
+	while read HOSTNAME TEMPLATE; do
+		if [ "$HOSTNAME" = "$1" ]; then
+			echo "$TEMPLATE"
+		fi
+	done
+}
+
+default_urls()
+{
+	cat << EOF
+src.fedoraproject.org	https://src.fedoraproject.org/%{path}/c/%{commit}
+pkgs.fedoraproject.org	https://src.fedoraproject.org/%{path}/c/%{commit}
+github.com	https://github.com/%{path}/commit/%{commit}
+EOF
+}
+
+get_format_url()
+{
+	USER_CONFIG="$HOME/.config/git-commit-urls.conf"
+	SYSTEM_CONFIG="/etc/git-commit-urls.conf"
+
+	if [ -r "$USER_CONFIG" ]; then
+		TEMPLATE=$(read_config "$1" < "$USER_CONFIG")
+	fi
+	if [ -z "$TEMPLATE" -a -r "$SYSTEM_CONFIG" ]; then
+		TEMPLATE=$(read_config "$1" < "$SYSTEM_CONFIG")
+	fi
+
+	if [ -z "$TEMPLATE" ]; then
+	# still not found or no configuration. Use some defaults
+		TEMPLATE=$(default_urls | read_config "$1")
+	fi
+	echo "$TEMPLATE"
+}
+
 print_commits()
 {
 	$GIT rev-list --no-walk $@ | while read COMMIT; do
-		echo "${URL_PREFIX}${COMMIT}${URL_SUFFIX}"
+		echo "$TEMPLATE" | sed -e "s|%{path}|$HOSTPATH|g" -e "s|%{commit}|$COMMIT|g"
 	done
 }
 
@@ -39,17 +80,11 @@ if [ "$HOST_PACKAGE" = "$ORIGIN_URL" ]; then
 	exit 1
 fi
 
-case "$HOST" in
-	src.fedoraproject.org|pkgs.fedoraproject.org)
-		URL_PREFIX="https://src.fedoraproject.org/${HOSTPATH}/c/"
-		;;
-	github.com)
-		URL_PREFIX="https://github.com/${HOSTPATH}/commit/"
-		;;
-	*)
-		echo "Unsupported remote $ORIGIN_URL" 2>&1
-		exit
-esac
+TEMPLATE=$(get_format_url $HOST)
+if [ -z "$TEMPLATE" ]; then
+	echo "Unsupported remote $ORIGIN_URL" 2>&1
+	exit 1
+fi
 
 if [ -n "$1" ]; then
 	print_commits "$@"
