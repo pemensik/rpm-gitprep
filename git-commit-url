@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Obtain commit URL from Redhat or Fedora dist-git
+
+# Something like:
+# https://src.fedoraproject.org/rpms/dnsmasq/c/d2f1660dbcf6811c0c1796a0392bbfa8a4574a8d?branch=master
+# just from commit mentioned inside git repository
+
+GIT=git
+REMOTE=origin
+ORIGIN_URL=$(git remote get-url $REMOTE)
+
+if [ $? -gt 0 ]; then
+	echo "Failed to get origin" 2>&1
+	exit 1
+fi
+
+HOST_PACKAGE=$(echo "$ORIGIN_URL" | sed \
+	-e 's|^https?://\([^@]\+@\)\?\([^/]\+\)/\([[:alnum:][:punct:]]\+\)\.git$|\2 \3|' \
+	-e 's|^ssh://\([^@]\+@\)\?\([^/]\+\)/\([[:alnum:][:punct:]]\+\)$|\2 \3|' \
+	-e 's|^\([^@]\+@\)\?\([^/]\+\):\([[:alnum:][:punct:]]\+\).git$|\2 \3|' \
+)
+
+HOST=$(echo "$HOST_PACKAGE" | cut -d' ' -f1)
+HOSTPATH=$(echo "$HOST_PACKAGE" | cut -d' ' -f2)
+URL_PREFIX=
+URL_SUFFIX=
+
+print_commits()
+{
+	$GIT rev-list --no-walk $@ | while read COMMIT; do
+		echo "${URL_PREFIX}${COMMIT}${URL_SUFFIX}"
+	done
+}
+
+if [ "$HOST_PACKAGE" = "$ORIGIN_URL" ]; then
+	echo "Remote URL $ORIGIN_URL is not in supported format" 2>&1
+	# echo "$HOST_PACKAGE"
+	exit 1
+fi
+
+case "$HOST" in
+	src.fedoraproject.org|pkgs.fedoraproject.org)
+		URL_PREFIX="https://src.fedoraproject.org/${HOSTPATH}/c/"
+		;;
+	github.com)
+		URL_PREFIX="https://github.com/${HOSTPATH}/commit/"
+		;;
+	*)
+		echo "Unsupported remote $ORIGIN_URL" 2>&1
+		exit
+esac
+
+if [ -n "$1" ]; then
+	print_commits "$@"
+else
+	print_commits HEAD
+fi
