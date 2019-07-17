@@ -1,0 +1,54 @@
+#!/bin/sh
+
+[ -z "$EDITOR" ] && EDITOR="$VISUAL"
+[ -z "$EDITOR" ] && EDITOR="vim"
+
+if [ -z "$@" ]
+then
+	FILES="$(git status --porcelain -- '**.rej' | sed -e 's/^?? //')"
+else
+	FILES="$@"
+fi
+
+for FILE in ${FILES}
+do
+  SOURCE="$(dirname "$FILE")/$(basename "$FILE" .rej)"
+  FINISH=no
+  VAR=r
+#  "$EDITOR" "$FILE"
+  while [ "$FINISH" != "yes" ]; do
+    cat << EOF
+File: ${FILE}
+Edit (r)eject or (s)ource file?
+Show both files in (v)im or (g)vim?
+(F)inished, show (d)iff or (a)bort?
+Choose action:
+EOF
+    read VAR
+    case "$VAR" in
+	r|R|rej|reject)
+		"$EDITOR" "$FILE"
+	;;
+	s|S|source)
+		"$EDITOR" "$SOURCE"
+	;;
+	d|D|diff)
+		git diff "$SOURCE"
+	;;
+	v|V|vim|gvim)
+		"$EDITOR" "+vsplit $SOURCE" "$FILE"
+	;;
+	g|G|gvim)
+		gvim "+vsplit $SOURCE" "$FILE"
+	;;
+	f|F|finished|ok)
+		git add "$SOURCE" && rm "$FILE"
+		FINISH=yes
+	;;
+	a|A|abort|!)
+		FINISH=yes
+	;;
+    esac
+  done
+
+done
