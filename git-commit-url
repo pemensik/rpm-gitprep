@@ -53,6 +53,7 @@ get_format_url()
 	USER_CONFIG="$HOME/.config/git-commit-urls.conf"
 	SYSTEM_CONFIG="/etc/git-commit-urls.conf"
 
+	TEMPLATE=
 	if [ -r "$USER_CONFIG" ]; then
 		TEMPLATE=$(read_config "$1" < "$USER_CONFIG")
 	fi
