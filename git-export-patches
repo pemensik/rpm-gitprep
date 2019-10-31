@@ -1,0 +1,80 @@
+#!/usr/bin/python3
+#
+# Script to export patches in git
+# Exports commits in upstream source git back to patches used in source git.
+#
+# Usage:
+# First generate repository using gitprep
+# cd ${SOURCEDIR}
+# git remote add upstream <giturl>
+# git fetch upstream
+# git rebase vX.Y
+# git-export-patches
+
+import argparse
+import git
+import re
+import subprocess
+import os.path
+
+tag = None
+output_dir = '..'
+commits_in_row = 3
+
+def commit_parameters(commit):
+        keyword = re.compile('\w+')
+        params = {}
+        for line in commit.message.split('\n'):
+            param = line.split(':', 2)
+            if len(param)>1 and keyword.match(param[0]):
+                params[param[0]] = param[1].strip()
+        return params
+
+def process_commit(commit):
+    """
+    Process one commit
+    :returns: True if processed, False if skipped
+
+    Export patch if patch name is provided.
+    """
+    params = commit_parameters(commit)
+    if 'Patch' in params:
+        patch = params['Patch']
+        gitresult = subprocess.run(['git', 'format-patch', '--stdout', '-1', commit.hexsha], capture_output=True, check=True)
+        outputpath = os.path.join(output_dir, patch)
+        with open(outputpath, 'wb') as f:
+            f.write(gitresult.stdout)
+        print('Exported {commit} to {path}.'.format(commit=commit, path=outputpath))
+        return True
+    return False
+        
+def process_repo(repo):
+    commit_range = None
+    if tag:
+        commit_range = tag + '..HEAD'
+    ignored = 0
+    for c in repo.iter_commits(commit_range):
+        if process_commit(c):
+            ignored=0
+        else:
+            ignored += 1
+            # When 3 commits in row
+            if ignored >= commits_in_row:
+                print('Terminating processing on commit {commit}'.format(commit=c))
+                break
+
+if __name__ == '__main__':
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-t', '--tag')
+        parser.add_argument('-o', '--output')
+        parser.add_argument('-n', '--ignore-number')
+        args = parser.parse_args()
+        if args.output:
+            output_dir = args.output
+        if args.ignore_number:
+            commits_in_row = int(args.ignore_number)
+        tag = args.tag
+
+        repo = git.Repo()
+        process_repo(repo)
+

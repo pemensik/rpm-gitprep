@@ -27,3 +27,8 @@ Support for autopatch were added. It is now possible to use it with macro:
 ```
 
 It would mark commits with original patch name, patch number. If commit was originally output of git format-patch, commit message would be intact.
+
+== git-export-patches ==
+
+A tool to export patches applied by gitprep back to separate patches.
+Useful to update patches in dist-git after rebase.
