@@ -65,9 +65,12 @@ def process_repo(repo):
 
 if __name__ == '__main__':
         parser = argparse.ArgumentParser()
-        parser.add_argument('-t', '--tag')
-        parser.add_argument('-o', '--output')
-        parser.add_argument('-n', '--ignore-number')
+        parser.add_argument('-t', '--tag',
+            help='starting upstream tag. Export patches just from HEAD to tag')
+        parser.add_argument('-o', '--output',
+            help='sutput directory for exported patches')
+        parser.add_argument('-n', '--ignore-number',
+            help='finish, when this number of commits in row do not contain Patch: parameter')
         args = parser.parse_args()
         if args.output:
             output_dir = args.output
