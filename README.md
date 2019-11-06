@@ -1,6 +1,7 @@
 = gitprep =
 
 == Legacy replacement of %patchX ==
+
 To use git to prepare your rpm sources, install this package and add into your ~/.rpmmacros:
 
 ```

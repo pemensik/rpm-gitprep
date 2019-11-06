@@ -117,6 +117,10 @@ do
 			NEXT=
 		elif [ "$NEXT" = "message" ]; then
 			MESSAGE="$P"
+			if [ "${MESSAGE:0:1}" = '/' ] && [ -f "$MESSAGE" ]; then
+				# Do not record absolute paths, use just relative path
+				MESSAGE=$(basename -- "$MESSAGE")
+			fi
 			NEXT=
 		elif echo "$P" | grep -q '^[0-9]\+$'; then
 			NUMBERS+=($P)
