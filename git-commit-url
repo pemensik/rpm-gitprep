@@ -44,7 +44,12 @@ default_urls()
 	cat << EOF
 src.fedoraproject.org	https://src.fedoraproject.org/%{path}/c/%{commit}
 pkgs.fedoraproject.org	https://src.fedoraproject.org/%{path}/c/%{commit}
+pagure.io	https://pagure.io/%{path}/c/%{commit}
 github.com	https://github.com/%{path}/commit/%{commit}
+gitlab.com	https://gitlab.com/%{path}/commit/%{commit}
+gitlab.isc.org	https://gitlab.isc.org/%{path}/commit/%{commit}
+gitlab.freedesktop.org	https://gitlab.freedesktop.org/%{path}/commit/%{commit}
+salsa.debian.org	https://salsa.debian.org/%{path}/commit/%{commit}
 EOF
 }
 
