@@ -1,6 +1,6 @@
 Name:		rpm-gitprep
 Version:	0.1
-Release:	7%{?dist}
+Release:	8%{?dist}
 Summary:	Prepare your RPM sources into git repository
 
 #Group:		
@@ -14,6 +14,7 @@ Source4:	spec-add-patch
 Source5:	spec-changelog
 Source6:	git-commit-url
 Source7:	rej-solve
+Source8:	git-commit-export
 
 BuildArch:	noarch
 BuildRequires:	rpm
@@ -41,10 +42,11 @@ mkdir -p %{buildroot}/%{execpath}
 mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
 %{__install} -p %{SOURCE1} %{buildroot}/%{_rpmconfigdir}/macros.d/
 mkdir -p %{buildroot}%{_bindir}
-%{__install} -m 755 %{SOURCE4} %{buildroot}%{_bindir}/spec-add-patch
-%{__install} -m 755 %{SOURCE5} %{buildroot}%{_bindir}/spec-changelog
-%{__install} -m 755 %{SOURCE6} %{buildroot}%{_bindir}/git-commit-url
-%{__install} -m 755 %{SOURCE7} %{buildroot}%{_bindir}/rej-solve
+%{__install} -pm 755 %{SOURCE4} %{buildroot}%{_bindir}/spec-add-patch
+%{__install} -pm 755 %{SOURCE5} %{buildroot}%{_bindir}/spec-changelog
+%{__install} -pm 755 %{SOURCE6} %{buildroot}%{_bindir}/git-commit-url
+%{__install} -pm 755 %{SOURCE7} %{buildroot}%{_bindir}/rej-solve
+%{__install} -pm 755 %{SOURCE8} %{buildroot}%{_bindir}/git-commit-export
 
 %files
 %doc README.md
@@ -55,8 +57,12 @@ mkdir -p %{buildroot}%{_bindir}
 %{_bindir}/spec-changelog
 %{_bindir}/rej-solve
 %{_bindir}/git-commit-url
+%{_bindir}/git-commit-export
 
 %changelog
+* Mon May 30 2022 Petr Menšík <pemensik@redhat.com> - 0.1-8
+- Add git-commit-export helper
+
 * Wed Jul 17 2019 Petr Menšík <pemensik@redhat.com> - 0.1-7
 - Add helper tools rej-solve and git-commit-url
 

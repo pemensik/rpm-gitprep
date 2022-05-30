@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+	echo "usage: $0 <path.patch> [commit]"
+	exit 1
+fi
+
+set -e
+
+COMMIT=${2:-HEAD}
+FILENAME="$(git format-patch -1 $COMMIT)"
+sed -f - -i "$FILENAME" << SED
+/^From /,/^---$/ {
+/^\s*$/ N
+/^\s*\nPatch:/ d
+}
+SED
+
+mv "$FILENAME" "$1"
