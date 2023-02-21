@@ -108,6 +108,9 @@ do
 		# Use git notes only
 		AMEND_NOTES=
 		;;
+	-f)
+		[ "$PATCH" = "${PATCH/git//}" ] && PATCH_OPTS+=("$P")
+		;;
 	-*)
 		echo "Warning: unsupported option $P" >&2
 		;;
