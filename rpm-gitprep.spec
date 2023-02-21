@@ -1,6 +1,6 @@
 Name:		rpm-gitprep
 Version:	0.1
-Release:	8%{?dist}
+Release:	9%{?dist}
 Summary:	Prepare your RPM sources into git repository
 
 #Group:		
@@ -60,6 +60,9 @@ mkdir -p %{buildroot}%{_bindir}
 %{_bindir}/git-commit-export
 
 %changelog
+* Tue Feb 21 2023 Petr Menšík <pemensik@redhat.com> - 0.1-9
+- Avoid applying gitprep when  %autosetup -S git macro is used
+
 * Mon May 30 2022 Petr Menšík <pemensik@redhat.com> - 0.1-8
 - Add git-commit-export helper
 
