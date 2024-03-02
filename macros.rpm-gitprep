@@ -15,6 +15,26 @@
 %__scm_apply_gitprep(qp:m:)\
 %{_gitprep__patch} %{-p:-p%{-p*}} %{-m:-m %{-m*}} %{-q:-s} --fuzz=%{_default_patch_fuzz} %{_default_patch_flags} %{?1} %{?2}
 
+# Define special handler commiting changes after sections
+%___gitprep_post() \
+if test "%__scm" = gitprep && \
+test "$(%{__git} status --porcelain --untracked-files=no | wc -l)" != 0; then \
+  %{__git} commit -am %{1}-post \
+else : \
+fi \
+%{nil}
+
+%__spec_prep_post	%{___gitprep_post prep} %{___build_post}
+%__spec_conf_post	%{___gitprep_post conf} %{___build_post}
+%__spec_build_post	%{___gitprep_post build} %{___build_post}
+%__spec_check_post	%{___gitprep_post check} %{___build_post}
+%__spec_install_post\
+%{?__debug_package:%{__debug_install_post}}\
+%{__arch_install_post}\
+%{__os_install_post}\
+%{___gitprep_post install}\
+%{nil}
+
 # Add to your ~/.rpmmacros:
 # %_fixperms %{_gitprep_rpmfixperms}
 # %__patch %{_gitprep_rpmpatch}
