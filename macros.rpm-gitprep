@@ -5,6 +5,7 @@
 # is there way to use old %%_fixperms value without creating recursion?
 %_gitprep_orig_fixperms %{__chmod} -Rf a+rX,u+w,g-w,o-w
 %_gitprep_fixperms \
+%{?_with_gitprep:%__scm_setup_gitprep}\
 %{!?__scm:%{__scm_setup_git}} \
 %{_gitprep_orig_fixperms}
 %_gitprep__patch %{_gitprep_rpmpatch} --git=%{__git}
@@ -17,8 +18,8 @@
 
 # Define special handler commiting changes after sections
 %___gitprep_post() \
-if test "%__scm" = gitprep && \
-test "$(%{__git} status --porcelain --untracked-files=no | wc -l)" != 0; then \
+if %{?_with_gitprep:true}%{?!_with_gitprep:test "%__scm" = gitprep} && \
+  test "$(%{__git} status --porcelain --untracked-files=no | wc -l)" != 0; then \
   %{__git} commit -am %{1}-post \
 else : \
 fi \
@@ -31,8 +32,8 @@ fi \
 %__spec_install_post\
 %{?__debug_package:%{__debug_install_post}}\
 %{__arch_install_post}\
-%{__os_install_post}\
 %{___gitprep_post install}\
+%{__os_install_post}\
 %{nil}
 
 # Add to your ~/.rpmmacros:
