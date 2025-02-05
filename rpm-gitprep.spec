@@ -1,11 +1,11 @@
 Name:		rpm-gitprep
 Version:	0.1
-Release:	10%{?dist}
+Release:	11%{?dist}
 Summary:	Prepare your RPM sources into git repository
 
 #Group:		
-License:	GPLv3+
-URL:		none
+License:	GPL-3.0-or-later
+URL:		https://github.com/pemensik/rpm-gitprep
 Source0:	rpmpatch.git
 Source1:	macros.rpm-gitprep
 Source2:	README.md
@@ -29,8 +29,8 @@ analyze what patches of package changed. Or what files were
 modified by what patches.
 
 %prep
-[ -f "README.md" ] || install %{SOURCE2} README.md
-[ -f "COPYING" ]   || install %{SOURCE3} COPYING
+[ -f "README.md" ] || install -p %{SOURCE2} README.md
+[ -f "COPYING" ]   || install -p %{SOURCE3} COPYING
 
 %build
 
@@ -60,6 +60,9 @@ mkdir -p %{buildroot}%{_bindir}
 %{_bindir}/git-commit-export
 
 %changelog
+* Wed Feb 05 2025 Petr Menšík <pemensik@redhat.com> - 0.1-11
+- Make changes to adapt for f41 changes
+
 * Sat Mar 02 2024 Petr Menšík <pemensik@redhat.com> - 0.1-10
 - Commit changes done after section
 
