@@ -5,21 +5,33 @@
 # is there way to use old %%_fixperms value without creating recursion?
 %_gitprep_orig_fixperms %{__chmod} -Rf a+rX,u+w,g-w,o-w
 %_gitprep_fixperms \
-%{?_with_gitprep:%__scm_setup_gitprep}\
-%{!?__scm:%{__scm_setup_git}} \
+%{?__scm:if [ "%__scm" = patch ]; then %{_gitprep_fixperms_git_setup}; fi} \
 %{_gitprep_orig_fixperms}
 %_gitprep__patch %{_gitprep_rpmpatch} --git=%{__git}
 
+# Because variables of macro will be destroyed if _fixperms calls macro,
+# workaround it by using a non-macro copy of __scm_setup_git
+%_gitprep_fixperms_git_setup \
+%{__git} init %{-q}\
+%{__git} config user.name "%{__scm_username}"\
+%{__git} config user.email "%{__scm_usermail}"\
+%{__git} config gc.auto 0\
+%{__git} add --force .\
+GIT_COMMITTER_DATE=%{__scm_source_timestamp} GIT_AUTHOR_DATE=%{__scm_source_timestamp}\\\
+	%{__git} commit %{-q} --allow-empty -a\\\
+	--author "%{__scm_author}" -m "%{NAME}-%{VERSION} base"\
+%{__git} checkout --track -b rpm-build
+
 # workaround to message support
-# this macros allow usage of %%autosetup -S gitprep
+# this macros allow usage of .autosetup -S gitprep
 %__scm_setup_gitprep(q) %{__scm_setup_git %{-q}}
 %__scm_apply_gitprep(qp:m:)\
 %{_gitprep__patch} %{-p:-p%{-p*}} %{-m:-m %{-m*}} %{-q:-s} --fuzz=%{_default_patch_fuzz} %{_default_patch_flags} %{?1} %{?2}
 
 # Define special handler commiting changes after sections
 %___gitprep_post() \
-if %{?_with_gitprep:true}%{?!_with_gitprep:test "%__scm" = gitprep} && \
-  test "$(%{__git} status --porcelain --untracked-files=no | wc -l)" != 0; then \
+if test "%__scm" = gitprep && \
+test "$(%{__git} status --porcelain --untracked-files=no | wc -l)" != 0; then \
   %{__git} commit -am %{1}-post \
 else : \
 fi \
@@ -32,8 +44,8 @@ fi \
 %__spec_install_post\
 %{?__debug_package:%{__debug_install_post}}\
 %{__arch_install_post}\
-%{___gitprep_post install}\
 %{__os_install_post}\
+%{___gitprep_post install}\
 %{nil}
 
 # Add to your ~/.rpmmacros:

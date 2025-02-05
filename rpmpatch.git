@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 #
 # Script to replace "patch" in rpmbuild, so git can be used instead
 #    --no-backup-if-mismatch -p1 -b --suffix .dynamic --fuzz=0
@@ -65,6 +65,7 @@ patchname()
 	[ -n "$FNAME" ] && echo "Patch: ${FNAME}" || :
 }
 
+PATCHLEVEL=""
 echo "$@"
 for P in "$@"
 do
@@ -100,6 +101,7 @@ do
 	-p*)
 		PATCH_OPTS+=("$P")
 		AM_OPTS+=("$P")
+		PATCHLEVEL="$P"
 		;;
 	-R|-E)
 		PATCH_OPTS+=("$P")
@@ -135,6 +137,8 @@ do
 done
 
 [ -z "$MESSAGE" ] && MESSAGE="${SUFFIX:-unnamed-patch}"
+# patch has weird default unless passed explicitly
+[ -z "$PATCHLEVEL" ] && PATCH_OPTS+=("-p1")
 
 if [ "$($GIT status --porcelain | wc -l)" != 0 ]
 then
